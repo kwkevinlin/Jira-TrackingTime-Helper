@@ -29,7 +29,7 @@ def open_config(filename):
         return json.load(config)
 
 
-def is_new_project(row, projects_time):
+def is_not_new_project(row, projects_time):
     return row["Project"] in projects_time
 
 
@@ -49,6 +49,29 @@ def create_new_project(row, projects_time):
     projects_time[row["Project"]] = {row["Task"]: convert_to_minutes(row["Duration"])}
 
 
+def write_output_to_file(projects_time, config):
+    filename = config["output"]["filename"]
+
+    if (config["output"]["format"] == "csv"):
+        with open(filename + ".csv", 'wb') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Project", "Task", "Time Spent (Minutes)"])
+
+            for project, tasks in projects_time.items():
+                print("Project: " + project)
+                tasks_row = []
+
+                first_index = project
+                for task in tasks:
+                    tasks_row.append([first_index, task, tasks[task]])
+                    first_index = ""
+
+                for row in tasks_row:
+                    writer.writerow(row)
+
+                print(tasks_row)
+
+
 def main():
     config = open_config("config.json")
     csv_file = config["input"]["filename"]
@@ -58,7 +81,7 @@ def main():
     with open(csv_file, 'r') as file:
         reader = csv.DictReader(file)
         for row in reader:
-            if is_new_project(row, projects_time):
+            if is_not_new_project(row, projects_time):  # Change order of this
                 if is_new_task(row, projects_time):
                     add_time_to_task(row, projects_time)
                 else:
@@ -66,7 +89,7 @@ def main():
             else:
                 create_new_project(row, projects_time)
 
-    pprint(projects_time, width=1)
+    write_output_to_file(projects_time, config)
 
 if __name__ == "__main__":
     main()

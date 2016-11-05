@@ -3,7 +3,8 @@
         "filename": "TrackingTime.csv"
     },
     "output": {
-        "fileFormat": "csv"
+        "filename": "TimeBreakdown",
+        "format": "csv"
     }
     
 }
