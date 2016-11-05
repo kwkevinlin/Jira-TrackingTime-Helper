@@ -29,26 +29,42 @@ def open_config(filename):
         return json.load(config)
 
 
+def is_new_project(row, projects_time):
+    return row["Project"] in projects_time
+
+
+def is_new_task(row, projects_time):
+    return row["Task"] in projects_time[row["Project"]]
+
+
+def add_time_to_task(row, projects_time):
+    projects_time[row["Project"]][row["Task"]] += convert_to_minutes(row["Duration"])
+
+
+def set_time_for_task(row, projects_time):
+    projects_time[row["Project"]][row["Task"]] = convert_to_minutes(row["Duration"])
+
+
+def create_new_project(row, projects_time):
+    projects_time[row["Project"]] = {row["Task"]: convert_to_minutes(row["Duration"])}
+
+
 def main():
     config = open_config("config.json")
     csv_file = config["input"]["filename"]
 
     projects_time = dict()
 
-    with open(csv_file, 'rb') as file:
+    with open(csv_file, 'r') as file:
         reader = csv.DictReader(file)
         for row in reader:
-            # If project exists
-            if row["Project"] in projects_time:
-                # If Task exists
-                if row["Task"] in projects_time[row["Project"]]:
-                    projects_time[row["Project"]][row["Task"]] += convert_to_minutes(row["Duration"])
-                # Add new task to project
+            if is_new_project(row, projects_time):
+                if is_new_task(row, projects_time):
+                    add_time_to_task(row, projects_time)
                 else:
-                    projects_time[row["Project"]][row["Task"]] = convert_to_minutes(row["Duration"])
-            # Add new project to dictionary
+                    set_time_for_task(row, projects_time)
             else:
-                projects_time[row["Project"]] = {row["Task"]: convert_to_minutes(row["Duration"])}
+                create_new_project(row, projects_time)
 
     pprint(projects_time, width=1)
 
