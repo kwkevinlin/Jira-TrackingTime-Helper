@@ -2,9 +2,20 @@
     TrackingTime CSV export parser for Jira
 
     Assumes input file is comma delimited
+
+    projects_time<dict>
+        Proj1:  Task1: <time>
+                Task2: <time>
+
+        Proj2:  Task1: <time>
+
+        Proj3:  Task1: <time>
+                Task2: <time>
+                Task3: <time>
 """
 
 import csv
+import json
 from pprint import pprint
 
 
@@ -13,36 +24,33 @@ def convert_to_minutes(time_str):
     return int(h) * 60 + int(m)
 
 
-filename = "TrackingTime.csv"
+def open_config(filename):
+    with open(filename) as config:
+        return json.load(config)
 
-projects_time = dict()
 
-with open(filename, 'rb') as csvfile:
-    reader = csv.DictReader(csvfile)
-    for row in reader:
-        # If project exists
-        if row["Project"] in projects_time:
-            # If Task exists
-            if row["Task"] in projects_time[row["Project"]]:
-                projects_time[row["Project"]][row["Task"]] += convert_to_minutes(row["Duration"])
-            # Add new task to project
+def main():
+    config = open_config("config.json")
+    csv_file = config["input"]["filename"]
+
+    projects_time = dict()
+
+    with open(csv_file, 'rb') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            # If project exists
+            if row["Project"] in projects_time:
+                # If Task exists
+                if row["Task"] in projects_time[row["Project"]]:
+                    projects_time[row["Project"]][row["Task"]] += convert_to_minutes(row["Duration"])
+                # Add new task to project
+                else:
+                    projects_time[row["Project"]][row["Task"]] = convert_to_minutes(row["Duration"])
+            # Add new project to dictionary
             else:
-                projects_time[row["Project"]][row["Task"]] = convert_to_minutes(row["Duration"])
-        # Add new project to dictionary
-        else:
-            projects_time[row["Project"]] = {row["Task"]: convert_to_minutes(row["Duration"])}
+                projects_time[row["Project"]] = {row["Task"]: convert_to_minutes(row["Duration"])}
 
-        
+    pprint(projects_time, width=1)
 
-
-"""
-End result:
-Proj1:  Task1: <time>
-        Task2: <time>
-
-Proj2:  Task1: <time>
-
-Proj3:  Task1: <time>
-        Task2: <time>
-        Task3: <time>
-"""
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,9 @@
+{
+    "input": {
+        "filename": "TrackingTime.csv"
+    },
+    "output": {
+        "fileFormat": "csv"
+    }
+    
+}
