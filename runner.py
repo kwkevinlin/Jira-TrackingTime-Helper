@@ -27,14 +27,20 @@ from pprint import pprint
 from datetime import datetime
 
 
+def open_config(filename):
+    with open(filename) as config:
+        return json.load(config)
+
+
+def get_formatted_task_date(date):
+    task_date = datetime.strptime(date, '%m/%d/%Y %I:%M:%S %p')
+    return "{}/{}".format(task_date.month, task_date.day)
+
+
 def convert_to_minutes(time_str):
     h, m = time_str.split(':')
     return int(h) * 60 + int(m)
 
-
-def open_config(filename):
-    with open(filename) as config:
-        return json.load(config)
 
 # =======
 
@@ -48,7 +54,8 @@ def is_new_task(row, projects_time):
 
 
 def is_new_date(row, projects_time, task_date):
-    # Don't have task in empty project yet
+    # This is always returning true because dict is always empty
+    # Why is dict task's time entry empty?
     return task_date not in projects_time[row["Project"]][row["Task"]]
 
 # =======
@@ -65,58 +72,42 @@ def create_new_task(row, projects_time):
 
 
 def create_new_task_time_at_date(row, projects_time, task_date):
+    # print("Before")
+    # pprint(projects_time[row["Project"]][row["Task"]])
     projects_time[row["Project"]][row["Task"]][task_date] = convert_to_minutes(row["Duration"])
+    # print("After")
+    # pprint(projects_time[row["Project"]][row["Task"]])
 
 
 def add_task_time_to_existing_date(row, projects_time, task_date):
-    [row["Project"]][row["Task"]][task_date] += convert_to_minutes(row["Duration"])
-
-# =======
+    projects_time[row["Project"]][row["Task"]][task_date] += convert_to_minutes(row["Duration"])
 
 
-def get_formatted_task_date(date):
-    task_date = datetime.strptime(date, '%m/%d/%Y %I:%M:%S %p')
-    return "{}/{}".format(task_date.month, task_date.day)
-
-
-"""
-Error:
-    Not appending all dates. Only keeping last it seems.
-"""
+def add_time_to_task(row, projects_time, task_date):
+    if is_new_task(row, projects_time):
+        create_new_task(row, projects_time)
+        if is_new_date(row, projects_time, task_date):
+            create_new_task_time_at_date(row, projects_time, task_date)
+        else:
+            add_task_time_to_existing_date(row, projects_time, task_date)
+    else:
+        if is_new_date(row, projects_time, task_date):
+            create_new_task_time_at_date(row, projects_time, task_date)
+        else:
+            add_task_time_to_existing_date(row, projects_time, task_date)
 
 
 def read_data_to_dict(input_csv):
-    projects_time = dict()
+    projects_time = {}
     with open(input_csv, 'r') as file:
         reader = csv.DictReader(file)
         for row in reader:
             task_date = get_formatted_task_date(row["Start Date"])
             if is_new_project(row, projects_time):
                 create_new_project(row, projects_time)
-                # Below is repeat
-                if is_new_task(row, projects_time):
-                    create_new_task(row, projects_time)
-                    if is_new_date(row, projects_time, task_date):
-                        create_new_task_time_at_date(row, projects_time, task_date)
-                    else:  # Old date
-                        add_task_time_to_existing_date(row, projects_time, task_date)
-                else:  # Old task
-                    if is_new_date(row, projects_time, task_date):
-                        create_new_task_time_at_date(row, projects_time, task_date)
-                    else:  # Old date
-                        add_task_time_to_existing_date(row, projects_time, task_date)
-            else:  # Old project
-                if is_new_task:
-                    create_new_task(row, projects_time)
-                    if is_new_date(row, projects_time, task_date):
-                        create_new_task_time_at_date(row, projects_time, task_date)
-                    else:  # Old date
-                        add_task_time_to_existing_date(row, projects_time, task_date)
-                else:  # Old task
-                    if is_new_date(row, projects_time, task_date):
-                        create_new_task_time_at_date(row, projects_time, task_date)
-                    else:  # Old date
-                        add_task_time_to_existing_date(row, projects_time, task_date)
+                add_time_to_task(row, projects_time, task_date)
+            else:
+                add_time_to_task(row, projects_time, task_date)
 
     return projects_time
 
@@ -138,7 +129,8 @@ def write_processed_data_to_csv(projects_time, config):
                 first_index = ""
 
 """
-    TODO: 
+    TODO:
+        Confirm if output is correct
         Option in config by day or week
 
     Potential Issue:
