@@ -1,2 +1,3 @@
-TrackingTime.csv
-TimeBreakdown.csv
+TrackingTime*.csv
+TimeBreakdown*.csv
+*.pyc
