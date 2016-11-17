@@ -1,9 +1,6 @@
 {
-    "input": {
-        "filename": "TrackingTime.csv"
-    },
     "output": {
-        "filename": "TimeBreakdown.csv"
+        "filename": "TimeBreakdown.csv",
+        "keep_date": true
     }
-    
 }

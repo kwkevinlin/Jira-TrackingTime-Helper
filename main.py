@@ -12,23 +12,24 @@ from utils import *
 from pprint import pprint
 
 """
-    TODO:
-        Dates are not outputting in order, but pprint is
+TODO
+    FIX:
+        Many dates are outputting in opposite order
+    ADD:
         Total hours worked
-        Option in config by day or week
-        Sprint naming for CSV
 """
 
 
 def main():
     config = open_config("config.json")
-    input_csv = config["input"]["filename"]
+
+    input_csv = get_input_csv(config)
 
     projects_time = read_data_to_dict(input_csv)
 
     pprint(projects_time, indent=4, width=1)
 
-    write_processed_data_to_csv(projects_time, config)
+    write_processed_data_to_csv(config, projects_time)
 
 
 if __name__ == "__main__":

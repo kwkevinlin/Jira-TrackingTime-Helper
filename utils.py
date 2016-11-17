@@ -2,6 +2,9 @@
     Utility functions for main driver
 """
 
+import os
+import re
+import sys
 import csv
 import json
 from utils import *
@@ -12,6 +15,43 @@ from datetime import datetime
 def open_config(filename):
     with open(filename) as config:
         return json.load(config)
+
+
+def get_input_csv(config):
+    files = os.listdir(".")
+    input_file_list = []
+    for file in files:
+        if "TrackingTime" in file:
+            input_file_list.append(file)
+
+    if len(input_file_list) > 1:
+        index = 1
+        print("\nWarning!\nMultiple TrackingTime CSV files found:")
+        for file in input_file_list:
+            print("\t{}. {}".format(index, file))
+            index += 1
+        filename_index = raw_input("Enter the correct filename index: ")
+        filename_index = validate_and_realign_index(filename_index, index - 1)
+        filename = input_file_list[filename_index]
+        print("\nUsing '{}'\n\n".format(filename))
+        config["input"] = {
+            "filename": filename
+        }
+        return filename
+    elif len(input_file_list) == 0:
+        sys.exit("\nError! No input file found with 'TrackingTime' in filename.\n" +
+                 "Script terminated.\n")
+    else:
+        return input_file_list[0]
+
+
+def validate_and_realign_index(filename_index, index):
+    if filename_index == "":
+        sys.exit("\nInvalid index. Clean your glasses and try again.\n")
+    filename_index = int(filename_index)
+    if filename_index > index or filename_index < 0:
+        sys.exit("\nInvalid index. Read carefully and try again.\n")
+    return filename_index - 1
 
 
 def get_formatted_task_date(date):
@@ -81,8 +121,8 @@ def read_data_to_dict(input_csv):
     return projects_time
 
 
-def write_processed_data_to_csv(projects_time, config):
-    filename = config["output"]["filename"]
+def write_processed_data_to_csv(config, projects_time):
+    filename = get_output_filename(config)
 
     with open(filename, 'wb') as file:
         writer = csv.writer(file)
@@ -96,3 +136,29 @@ def write_processed_data_to_csv(projects_time, config):
                     writer.writerow([first_index, second_index, day, time_spent])
                     first_index = ""
                     second_index = ""
+
+
+def get_output_filename(config):
+    input_filename = config["input"]["filename"]
+    output_filename = config["output"]["filename"]
+
+    if config["output"]["keep_date"]:
+        date = ""
+        try:
+            date = get_report_end_date(input_filename)
+            sub_name = output_filename.partition(".csv")
+            output_filename = sub_name[0] + " - " + date + sub_name[1]
+        except Exception as e:
+            if input_filename == "TrackingTime.csv":
+                print ("\nWarning!\nNo dates detected in input file '{}'. " +
+                       "Using config filename '{}'.").format(input_filename, output_filename)
+            else:
+                print ("\nWarning!\nSomething went wrong in utils.py.get_output_filename. " +
+                       "Using config filename '{}'.").format(output_filename)
+
+    print("\nDone!\nProject time tracking breakdown written to '{}'\n".format(output_filename))
+    return output_filename
+
+
+def get_report_end_date(input_filename):
+    return re.search("TrackingTime .* - (.*), \d{4}.csv", input_filename).group(1)
