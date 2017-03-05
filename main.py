@@ -14,7 +14,7 @@ from pprint import pprint
 """
 TODO
     FIX:
-        Many dates are outputting in opposite order
+        Some dates may be outputting in random order
     ADD:
         Total hours worked
 """
@@ -23,9 +23,11 @@ TODO
 def main():
     config = open_config("config.json")
 
-    input_csv = get_input_csv(config)
+    move_timesheet_to_working_folder(config)
 
-    projects_time = read_data_to_dict(input_csv)
+    timesheet = read_input_timesheet(config)
+
+    projects_time = read_data_to_dict(timesheet)
 
     pprint(projects_time, indent=4, width=1)
 
