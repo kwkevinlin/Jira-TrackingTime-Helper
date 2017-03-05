@@ -3,7 +3,7 @@
 A python helper script for [TrackingTime](https://chrome.google.com/webstore/detail/trackingtime-time-tracker/knailkjkjcfegledhjhcfacdngnicimb?hl=en-US) that aggregates total minutes spent for each task for easy entry into Jira.
 
 ### Input
-A comma-delimited file exported from TrackingTime for any given time period (usually two weeks for a sprint).
+A comma-delimited timesheet file exported from TrackingTime.
 
 ### Output
 A comma-delimited file of the following format:  
@@ -18,18 +18,20 @@ A comma-delimited file of the following format:
 |           | Task 3 | 78                   |  
 
 ### Config
-Input and outfile filenames are defined in the config, located in `config.json`. The config should look like this:  
+Timesheet files are automatically fetched from the downloads folder and moved to the local repo directory. Downloads and repo paths are defined in `config.json`. The export filename is also defined in config. The config should look like this:  
 ```JSON
 {
     "input": {
-        "filename": "TrackingTime.csv"
+        "src": "/downloads/folder",
+        "dest": "/path/to/Jira/repo/folder"
     },
     "output": {
-        "filename": "TimeBreakdown.csv"
+        "filename": "TimeBreakdown.csv",
+        "keep_date": true
     }
 }
 ```
-Both `filename` options are user-defined.
+`keep_date` determines if the output filename should have the date appended.
 
 ### Next Steps
-Future releases will include automatic appending of sprint names to the end of the output file, as well as archiving of previously generated time-breakdown files to the archive folder.
+Future release will include feature to automatically archive previously generated time-breakdown files into the archive foler.
