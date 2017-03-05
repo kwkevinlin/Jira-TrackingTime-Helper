@@ -1,4 +1,8 @@
 {
+    "input": {
+        "src": "/downloads/folder",
+        "dest": "/path/to/Jira/repo/folder"
+    },
     "output": {
         "filename": "TimeBreakdown.csv",
         "keep_date": true
