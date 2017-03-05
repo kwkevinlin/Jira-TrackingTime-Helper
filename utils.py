@@ -17,12 +17,20 @@ def open_config(filename):
         return json.load(config)
 
 
-def get_input_csv(config):
-    files = os.listdir(".")
+def move_timesheet_to_working_folder(config):
+    for filename in os.listdir(config["input"]["src"]):
+        if "TrackingTime" in filename:
+            source = "{}/{}".format(config["input"]["src"], filename)
+            destination = "{}/{}".format(config["input"]["dest"], filename)
+            os.rename(source, destination)
+            print("Moved '{}' to Jira folder\n".format(filename))
+
+
+def read_input_timesheet(config):
     input_file_list = []
-    for file in files:
-        if "TrackingTime" in file:
-            input_file_list.append(file)
+    for filename in os.listdir("."):
+        if "TrackingTime" in filename:
+            input_file_list.append(filename)
 
     if len(input_file_list) > 1:
         index = 1
@@ -34,24 +42,30 @@ def get_input_csv(config):
         filename_index = validate_and_realign_index(filename_index, index - 1)
         filename = input_file_list[filename_index]
         print("\nUsing '{}'\n\n".format(filename))
-        config["input"] = {
-            "filename": filename
-        }
+        add_input_filename_to_config(config, filename)
         return filename
     elif len(input_file_list) == 0:
         sys.exit("\nError! No input file found with 'TrackingTime' in filename.\n" +
                  "Script terminated.\n")
     else:
+        filename = input_file_list[0]
+        add_input_filename_to_config(config, filename)
         return input_file_list[0]
 
 
 def validate_and_realign_index(filename_index, index):
     if filename_index == "":
-        sys.exit("\nInvalid index. Clean your glasses and try again.\n")
+        sys.exit("\nInvalid index. Clean your glasses and try again!\n")
     filename_index = int(filename_index)
     if filename_index > index or filename_index < 0:
-        sys.exit("\nInvalid index. Read carefully and try again.\n")
+        sys.exit("\nInvalid index. Read carefully and try again!\n")
     return filename_index - 1
+
+
+def add_input_filename_to_config(config, filename):
+    config["input"] = {
+        "filename": filename
+    }
 
 
 def get_formatted_task_date(date):
@@ -85,11 +99,11 @@ def create_new_task(row, projects_time):
 
 
 def create_new_task_time_at_date(row, projects_time, task_date):
-    projects_time[row["Project"]][row["Task"]][task_date] = convert_to_minutes(row["Duration"])
+    projects_time[row["Project"]][row["Task"]][task_date] = convert_to_minutes(row["Duration"]) * 1.00
 
 
 def add_task_time_to_existing_date(row, projects_time, task_date):
-    projects_time[row["Project"]][row["Task"]][task_date] += convert_to_minutes(row["Duration"])
+    projects_time[row["Project"]][row["Task"]][task_date] += convert_to_minutes(row["Duration"]) * 1.00
 
 
 def add_time_to_task(row, projects_time, task_date):
